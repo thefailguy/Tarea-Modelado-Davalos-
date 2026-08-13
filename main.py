@@ -20,7 +20,7 @@ st.set_page_config(
 def load_assets():
     """Carga el modelo entrenado y los datos históricos de proceso."""
     try:
-        model = joblib.load('modelo_xgboost_final.joblib')
+        model = joblib.load('modelo_randomforest_final.joblib')
         df = pd.read_csv('transformed_data.csv')
         return model, df
     except Exception as e:
@@ -51,8 +51,8 @@ if model is not None and df is not None:
 
     # DataFrame con las entradas actuales
     df_current = pd.DataFrame({
-        'presion_cabeza_psi': [pressure],
-        'agua_BAPD': [flow],
+        'agua_BAPD': [pressure],
+        'presion_cabeza_psi': [flow],
         'cloruros_ppm': [temp]
     })
 
@@ -102,11 +102,11 @@ if model is not None and df is not None:
 
         cloruros_range = np.linspace(t_min, t_max, 40)
         agua_range = np.linspace(f_min, f_max, 40)
-        cloruros_grid, agua_grid = np.meshgrid(cloruros_range, agua_range)
+        cloruros_, agua_grid = np.meshgrid(cloruros_range, agua_range)
 
         grid_df = pd.DataFrame({
-            'presion_cabeza_psi': pressure,
-            'agua_BAPD': agua_grid.ravel(),
+            'agua_BAPD': pressure,
+            'presion_cabeza_psi': agua_grid.ravel(),
             'cloruros_ppm': cloruros_grid.ravel()
         })
 
@@ -135,7 +135,7 @@ if model is not None and df is not None:
         ]
 
         def obj_func(x):
-            in_df = pd.DataFrame([x], columns=['presion_cabeza_psi', 'agua_BAPD', 'cloruros_ppm'])
+            in_df = pd.DataFrame([x], columns=['agua_BAPD', 'presion_cabeza_psi', 'cloruros_ppm'])
             return model.predict(in_df)[0] # Minimize MPY directly
 
         x0 = [pressure, flow, temp]
@@ -162,4 +162,4 @@ if model is not None and df is not None:
         reduction = current_pred - opt_mpy
         st.success(f"💡 **Reducción Potencial de Corrosión:** `-{reduction:.2f} MPY` de reducción alcanzable ajustando al Setpoint Óptimo.")
 else:
-    st.error("No se pudo iniciar la aplicación. Verifica la existencia de 'modelo_xgboost_final.joblib' y 'transformed_data.csv'.")
+    st.error("No se pudo iniciar la aplicación. Verifica la existencia de '_randomforest_final.joblib' y 'transformed_data.csv'.")
