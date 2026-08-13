@@ -51,8 +51,8 @@ if model is not None and df is not None:
 
     # DataFrame con las entradas actuales
     df_current = pd.DataFrame({
-        'agua_BAPD': [pressure],
-        'presion_cabeza_psi': [flow],
+        'agua_BAPD': [flow],
+        'presion_cabeza_psi': [pressure],
         'cloruros_ppm': [temp]
     })
 
@@ -102,7 +102,7 @@ if model is not None and df is not None:
 
         cloruros_range = np.linspace(t_min, t_max, 40)
         agua_range = np.linspace(f_min, f_max, 40)
-        cloruros_, agua_grid = np.meshgrid(cloruros_range, agua_range)
+        cloruros_grid, agua_grid = np.meshgrid(cloruros_range, agua_range)
 
         grid_df = pd.DataFrame({
             'agua_BAPD': pressure,
@@ -138,7 +138,7 @@ if model is not None and df is not None:
             in_df = pd.DataFrame([x], columns=['agua_BAPD', 'presion_cabeza_psi', 'cloruros_ppm'])
             return model.predict(in_df)[0] # Minimize MPY directly
 
-        x0 = [pressure, flow, temp]
+        x0 = [flow, pressure, temp]
         res = minimize(obj_func, x0, method='L-BFGS-B', bounds=bounds)
 
         opt_p, opt_f, opt_t = res.x
