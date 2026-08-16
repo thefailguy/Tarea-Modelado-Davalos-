@@ -20,7 +20,7 @@ st.set_page_config(
 def load_assets():
     """Carga el modelo entrenado y los datos históricos de proceso."""
     try:
-        model = joblib.load('modelo_randomforest_final.joblib')
+        model = joblib.load('modelo_adaboost_final.joblib')
         df = pd.read_csv('transformed_data.csv')
         return model, df
     except Exception as e:
@@ -61,7 +61,7 @@ if model is not None and df is not None:
 
     # --- Header Principal ---
     st.title("🧪 Sistema Inteligente de Corrosión: Predicción, Interpretabilidad y Prescripción")
-    st.markdown("Esta plataforma web integra Machine Learning avanzado (RandomForest), Interpretabilidad Explicable (SHAP) y Optimización de Setpoints para la corrosión.")
+    st.markdown("Esta plataforma web integra el modelo AdaBoost final seleccionado por AutoML, interpretabilidad explicable (SHAP) y optimización de setpoints para la corrosión.")
 
     # --- Pestañas de la Aplicación ---
     tab1, tab2, tab3, tab4 = st.tabs([
@@ -88,7 +88,9 @@ if model is not None and df is not None:
         st.subheader("🧠 Interpretabilidad Local con SHAP")
         st.markdown("Explicación detallada de cómo cada variable operacional está influyendo en la predicción actual de corrosión respecto al valor promedio de la planta.")
 
-        explainer = shap.TreeExplainer(model)
+        # AdaBoost no es compatible con TreeExplainer; usamos un explicador agnóstico al modelo
+        background = X_ref.sample(n=min(100, len(X_ref)), random_state=123)
+        explainer = shap.Explainer(model.predict, background)
         shap_values_single = explainer(df_current)
 
         fig, ax = plt.subplots(figsize=(8, 3.5))
@@ -126,7 +128,7 @@ if model is not None and df is not None:
     # === TAB 4: SETPOINT OPERACIONAL ÓPTIMO ===
     with tab4:
         st.subheader("🎯 Optimización Prescriptiva de Setpoint")
-        st.markdown("Búsqueda matemática del punto óptimo de operación $(presion\_cabeza\_psi^*, agua\_BAPD^*, cloruros\_ppm^*)$ que **minimiza la corrosión** dentro de límites seguros de planta (percentiles 5% a 95%).")
+        st.markdown(r"Búsqueda matemática del punto óptimo de operación $(presion\_cabeza\_psi^*, agua\_BAPD^*, cloruros\_ppm^*)$ que **minimiza la corrosión** dentro de límites seguros de planta (percentiles 5% a 95%).")
 
         bounds = [
             (df['presion_cabeza_psi'].quantile(0.05), df['presion_cabeza_psi'].quantile(0.95)),
@@ -162,4 +164,4 @@ if model is not None and df is not None:
         reduction = current_pred - opt_mpy
         st.success(f"💡 **Reducción Potencial de Corrosión:** `-{reduction:.2f} MPY` de reducción alcanzable ajustando al Setpoint Óptimo.")
 else:
-    st.error("No se pudo iniciar la aplicación. Verifica la existencia de '_randomforest_final.joblib' y 'transformed_data.csv'.")
+    st.error("No se pudo iniciar la aplicación. Verifica la existencia de 'modelo_adaboost_final.joblib' y 'transformed_data.csv'.")
